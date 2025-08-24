@@ -1,110 +1,107 @@
-# --- VPC and Availability Zones ---
+# ------------------------------------------------------------------
+# FILE: modules/compute/main.tf
+# ------------------------------------------------------------------
 
-# Fetches the available Availability Zones in the selected region
-data "aws_availability_zones" "available" {
-  state = "available"
+# --- IAM Role for SSM (Improvement #1) ---
+# This role allows instances to be managed by AWS Systems Manager
+# without needing SSH keys.
+# ------------------------------------------------------------------
+resource "aws_iam_role" "ec2_role" {
+  name = "${var.project_name}-ec2-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
 }
 
-# Creates the Virtual Private Cloud (VPC)
-resource "aws_vpc" "main" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_support   = true
-  enable_dns_hostnames = true
+resource "aws_iam_role_policy_attachment" "ssm_policy" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "${var.project_name}-ec2-profile"
+  role = aws_iam_role.ec2_role.name
+}
+
+
+# --- Data source for latest Amazon Linux AMI ---
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-2023.*-x86_64"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
+# --- Management (Bastion) Host ---
+resource "aws_instance" "mgmt" {
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t2.micro"
+  subnet_id     = var.mgmt_subnet_id
+  key_name      = var.key_name
+  vpc_security_group_ids = [var.mgmt_security_group_id]
+  iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
 
   tags = {
-    Name = "main-vpc"
+    Name = "${var.project_name}-mgmt-host"
   }
 }
 
-# --- Internet Gateway for Public Subnet ---
-
-# Creates an Internet Gateway to allow communication with the internet
-resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.main.id
-
-  tags = {
-    Name = "main-igw"
-  }
+# --- Application Auto Scaling Group ---
+# User data script to install Apache
+data "template_file" "user_data" {
+  template = file("${path.module}/user_data.sh")
 }
 
-# --- Subnets ---
+resource "aws_launch_template" "app" {
+  name_prefix   = "${var.project_name}-app"
+  image_id      = data.aws_ami.amazon_linux.id
+  instance_type = "t2.micro"
+  key_name      = var.key_name
+  user_data     = base64encode(data.template_file.user_data.rendered)
 
-# Creates the public management subnet in the first AZ
-resource "aws_subnet" "management" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.management_subnet_cidr
-  availability_zone       = data.aws_availability_zones.available.names[0] # e.g., us-east-1a
-  map_public_ip_on_launch = true                                           # Assigns public IPs automatically
-
-  tags = {
-    Name = "management-subnet"
-  }
-}
-
-# Creates the private application subnet in the second AZ
-resource "aws_subnet" "application" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.application_subnet_cidr
-  availability_zone = data.aws_availability_zones.available.names[1] # e.g., us-east-1b
-
-  tags = {
-    Name = "application-subnet"
-  }
-}
-
-# Creates the private backend subnet in the first AZ
-resource "aws_subnet" "backend" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.backend_subnet_cidr
-  availability_zone = data.aws_availability_zones.available.names[0] # e.g., us-east-1a
-
-  tags = {
-    Name = "backend-subnet"
-  }
-}
-
-# --- Routing for Public Subnet ---
-
-# Creates a route table for public traffic
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-
-  # Route to the Internet Gateway for all outbound traffic (0.0.0.0/0)
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
+  vpc_security_group_ids = [var.app_security_group_id]
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ec2_profile.name
   }
 
   tags = {
-    Name = "public-rt"
+    Name = "${var.project_name}-app-launch-template"
   }
 }
 
-# Associates the public route table with the management subnet
-resource "aws_route_table_association" "management" {
-  subnet_id      = aws_subnet.management.id
-  route_table_id = aws_route_table.public.id
-}
+resource "aws_autoscaling_group" "app" {
+  name                = "${var.project_name}-app-asg"
+  min_size            = 2
+  max_size            = 6
+  desired_capacity    = 2
+  vpc_zone_identifier = var.app_subnet_ids
 
-# --- Routing for Private Subnets ---
-
-# Creates a route table for private traffic (no route to the internet)
-resource "aws_route_table" "private" {
-  vpc_id = aws_vpc.main.id
-
-  tags = {
-    Name = "private-rt"
+  launch_template {
+    id      = aws_launch_template.app.id
+    version = "$Latest"
   }
-}
 
-# Associates the private route table with the application subnet
-resource "aws_route_table_association" "application" {
-  subnet_id      = aws_subnet.application.id
-  route_table_id = aws_route_table.private.id
-}
-
-# Associates the private route table with the backend subnet
-resource "aws_route_table_association" "backend" {
-  subnet_id      = aws_subnet.backend.id
-  route_table_id = aws_route_table.private.id
+  tag {
+    key                 = "Name"
+    value               = "${var.project_name}-app-instance"
+    propagate_at_launch = true
+  }
 }
