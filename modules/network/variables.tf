@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------
-# FILE: modules/networking/variables.tf
+# FILE: modules/network/variables.tf
 # ------------------------------------------------------------------
 
 variable "project_name" {
