@@ -34,6 +34,7 @@ Architecture Diagram
 --------------------
 
 The following diagram illustrates the architecture of the deployed infrastructure.
+<img width="3662" height="3840" alt="tc_challenge_diagram" src="https://github.com/user-attachments/assets/810d40b9-8b9f-4611-9f0f-84db8ac6d304" />
 
 ```
 graph TD
