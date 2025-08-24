@@ -40,6 +40,47 @@ Deployment Instructions
 -   [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli "null") installed (v1.0.0+).
 -   [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html "null") installed and configured with appropriate credentials.
 
+### Deployment Steps
+
+1.  **Clone the Repository**:
+
+    ```
+    git clone <your-repo-url>
+    cd <your-repo-directory>
+
+    ```
+
+2.  **Prepare Terraform Variables**: Create a `terraform.tfvars` file by copying the example file.
+
+    ```
+    cp terraform.tfvars.example terraform.tfvars
+
+    ```
+
+    Edit `terraform.tfvars` and provide values for the variables, such as your IP address and the name of your EC2 key pair.
+
+3.  **Initialize Terraform**: Run `terraform init` to initialize the backend and download the necessary providers.
+
+    ```
+    terraform init
+
+    ```
+
+4.  **Plan the Deployment**: Run `terraform plan` to review the resources that will be created.
+
+    ```
+    terraform plan -out=tfplan
+
+    ```
+
+5.  **Apply the Configuration**: Apply the plan to create the AWS resources.
+
+    ```
+    terraform apply "tfplan"
+
+    ```
+
+Upon successful completion, Terraform will output the DNS name of the Application Load Balancer.
 
 Part Two: Operational Analysis and Improvement Plan
 ---------------------------------------------------
@@ -67,4 +108,13 @@ This infrastructure is a solid proof-of-concept, but for a production environmen
 
     -   **Instance Types**: t2.micro instances won't work for significant workloads.  A more robust EC2 may be needed depending on its use.
 
+Runbook-style notes
 
+o Q-How would someone else deploy and operate your environment?
+    A-I encountered issues trying to deploy to AWS.  My intent was to have a repo that could be cloned and deployed via Terraform in AWS
+
+o Q-How would you respond to an outage for the EC2 instance?
+    A-If the EC2 is accessible I would try a restart, then review logs to get specifics.  Considering the size of the EC2 for the challange I would consider a larger EC2 to help avoid outages
+
+o Q-How would you restore data if the S3 bucket were deleted?
+    A-I like to use lifecycle management with S3 to archive older data, this would help with restoring data
