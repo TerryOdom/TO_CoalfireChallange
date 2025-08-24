@@ -36,56 +36,6 @@ Architecture Diagram
 The following diagram illustrates the architecture of the deployed infrastructure.
 <img width="3662" height="3840" alt="tc_challenge_diagram" src="https://github.com/user-attachments/assets/810d40b9-8b9f-4611-9f0f-84db8ac6d304" />
 
-```
-graph TD
-    subgraph "AWS Cloud"
-        subgraph "VPC (10.1.0.0/16)"
-            subgraph "Availability Zone A"
-                subgraph "Public Subnet (Management)"
-                    ec2_mgmt("EC2 Management Host")
-                end
-                subgraph "Private Subnet (Application)"
-                    ec2_app_1("EC2 App Host 1")
-                end
-                 subgraph "Private Subnet (Backend)"
-                    backend_1("...")
-                end
-            end
-
-            subgraph "Availability Zone B"
-                subgraph "Public Subnet (Management)"
-                    alb("Application Load Balancer")
-                end
-                subgraph "Private Subnet (Application)"
-                    ec2_app_2("EC2 App Host 2")
-                end
-                 subgraph "Private Subnet (Backend)"
-                    backend_2("...")
-                end
-            end
-
-            igw("Internet Gateway")
-            nat("NAT Gateway")
-
-            ec2_mgmt -- "SSH" --> ec2_app_1
-            ec2_mgmt -- "SSH" --> ec2_app_2
-            alb -- "HTTP" --> asg
-            asg(Auto Scaling Group) --- ec2_app_1
-            asg --- ec2_app_2
-        end
-    end
-
-    user("User") -- "SSH" --> ec2_mgmt
-    internet("Internet") -- "HTTP" --> alb
-    ec2_app_1 -- "Outbound" --> nat
-    ec2_app_2 -- "Outbound" --> nat
-    nat -- "Outbound" --> igw
-    internet -- "Inbound" --> igw
-    igw -- "Inbound" --> alb
-    igw -- "Inbound" --> ec2_mgmt
-
-```
-
 Deployment Instructions
 -----------------------
 
