@@ -108,7 +108,7 @@ This infrastructure is a solid proof-of-concept, but for a production environmen
 
     -   **Instance Types**: t2.micro instances won't work for significant workloads.  A more robust EC2 may be needed depending on its use.
 
-Runbook-style notes
+**Runbook-style notes**
 
 o Q-How would someone else deploy and operate your environment?
     A-I encountered issues trying to deploy to AWS.  My intent was to have a repo that could be cloned and deployed via Terraform in AWS
@@ -118,3 +118,41 @@ o Q-How would you respond to an outage for the EC2 instance?
 
 o Q-How would you restore data if the S3 bucket were deleted?
     A-I like to use lifecycle management with S3 to archive older data, this would help with restoring data
+
+**Research Resources**
+
+https://developer.hashicorp.com/terraform/tutorials/modules/module
+https://spacelift.io/blog/terraform-files
+https://dev.to/patdevops/building-reusable-infrastructure-with-terraform-modules-625
+https://medium.com/@tahirbalarabe2/security-best-practices-for-aws-vpc-15832e1c6326
+https://www.hyperglance.com/blog/aws-vpc-security-best-practices/
+https://spacelift.io/blog/terraform-alb
+https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener_rule
+https://docs.gruntwork.io/reference/modules/terraform-aws-load-balancer/lb-listener-rules/
+https://spacelift.io/blog/terraform-ec2-instance
+https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group
+https://natworked.medium.com/creating-an-aws-ec2-instance-with-bash-user-data-script-to-install-apache-web-server-34cb4ba160bf
+https://gist.github.com/herrera-ignacio/4d91ae564364f9120720f6bf029b9412
+https://www.thinkstack.co/blog/using-terraform-to-create-an-ec2-instance-with-cloudwatch-alarm-metrics
+https://developer.hashicorp.com/terraform/tutorials/aws/aws-asg
+https://blog.avangards.io/5-tips-to-efficiently-manage-aws-security-groups-using-terraform
+https://www.itwonderlab.com/aws-terraform-tutorial-aws-routing-tables/
+https://dev.to/chinmay13/placing-ec2-webserver-instances-in-a-private-subnet-with-internet-access-via-nat-gateway-using-terraform-167n
+https://businesscompassllc.com/how-to-set-up-a-private-nat-gateway-with-terraform-a-step-by-step-guide/
+https://www.itwonderlab.com/aws-terraform-tutorial-aws-nat-gateway/
+https://dev.to/charlesuneze/securing-your-vpc-using-public-private-subnets-2lcb
+https://spacelift.io/blog/terraform-aws-vpc
+https://docs.aws.amazon.com/prescriptive-guidance/latest/terraform-aws-provider-best-practices/structure.html
+https://www.stormit.cloud/blog/aws-high-availability-architecture/
+https://docs.gruntwork.io/reference/modules/terraform-aws-load-balancer/lb-listener-rules/
+https://www.finops.org/wg/cost-optimization-for-aws-ec2-autoscaling/
+https://aws.amazon.com/aws-cost-management/cost-optimization/
+https://medium.com/@Muriithi_nancy/securing-aws-cloud-environments-a-practical-approach-to-aws-security-best-practices-ed9f6a386035
+https://spacelift.io/blog/terraform-security-group
+https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm
+https://dev.to/chinmay13/getting-started-with-aws-and-terraform-setting-up-cloudwatch-alarms-for-cpu-utilization-on-aws-ec2-instances-with-terraform-14l2
+https://medium.com/@mattiamazzari/auto-scaling-with-cloudwatch-scaling-alarms-using-terraform-dbd83211fd17
+https://miro.com/diagramming/aws-architecture-diagram/
+https://www.reddit.com/r/learnprogramming/comments/vxfku6/how_to_write_a_readme/
+https://github.com/banesullivan/README
+https://medium.com/be-tech-with-santander/how-to-create-a-readme-md-for-projects-with-terraform-docs-b9ce7a969b34
